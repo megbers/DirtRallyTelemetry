@@ -4,12 +4,19 @@ import controlP5.ControlP5;
 import org.egbers.telemerty.dirt.ui.DashBoardApplet;
 import org.egbers.telemerty.dirt.ui.UISettings;
 import processing.core.PFont;
+import processing.core.PImage;
 
 public class FullController extends Controller {
     private ControlP5 cp5;
+    private PImage wheelImg;
+
+    public FullController(DashBoardApplet applet) {
+        super(applet);
+        wheelImg = applet.loadImage(applet.pathPrefix + "wheel.png");
+    }
 
     @Override
-    public ControlP5 drawControls(DashBoardApplet applet) {
+    public ControlP5 drawControls() {
         // Create some dials and gauges on screen
         cp5 = new ControlP5(applet);
         UISettings settings = applet.getSettings();
@@ -225,5 +232,125 @@ public class FullController extends Controller {
         return cp5;
     }
 
+    @Override
+    public void draw() {
+        UISettings settings = applet.getSettings();
+        //Draw GBall
+        if (!applet.isWindowBeingDragged) {
+            applet.ellipseMode(applet.CENTER);
+            applet.stroke(0);
+
+            //if gballFlash is turned on
+            //Flash G-Ball enclosure red if gforce > 15
+            if (((applet.abs(applet.gForceX) > 15) || (applet.abs(applet.gForceX) > 15)) && (settings.getGballFlash())) {
+                applet.fill(applet.RED);
+                // red outer ellipse for G-Ball
+                //with grey central ellipse
+                applet.ellipse(96, 75, 120, 120);
+                applet.fill(applet.DARKGREY);
+                applet.ellipse(96, 75, 70, 70);
+            } else if (((applet.abs(applet.gForceX) > 10) || (applet.abs(applet.gForceX) > 10)) && (settings.getGballFlash())) {
+                applet.fill(applet.ORANGE);
+                // orange outer ellipse for G-Ball
+                //with grey central ellipse
+                applet.ellipse(96, 75, 120, 120);
+                applet.fill(applet.DARKGREY);
+                applet.ellipse(96, 75, 70, 70);
+            } else {
+                applet.fill(applet.DARKGREY);
+                //background ellipse for G-Ball
+                applet.ellipse(96, 75, 120, 120);
+            }
+            //Black lines on G-Ball
+            applet.fill(applet.DARKGREY);
+            applet.ellipse(96, 75, 70, 70);
+            //stroke(255);
+            applet.fill(255, 0);
+            applet.ellipse(96, 75, 70, 70);
+            applet.line(96, 15, 96, 135);
+            applet.line(36, 75, 156, 75);
+            applet.fill(255, 0);
+
+            //Draw Trace of previous 10 GBall positions
+            applet.fill(applet.WHITE);
+            applet.noStroke();
+            applet.stroke(255, 255, 255, 200);
+            applet.noFill();
+            if (settings.getShowGTrace()) {
+                //curveTightness(.5);
+                applet.strokeWeight(2);
+                applet.beginShape();
+                applet.curveVertex(applet.gballOld[0].x, applet.gballOld[0].y);
+                for (int i = 1; i < settings.getTraceLength() - 1; i++) {
+
+                    //ellipse(gballOld[i].x, gballOld[i].y, 5, 5);
+                    //line(gballOld[i-1].x, gballOld[i-1].y,gballOld[i].x, gballOld[i].y);
+                    if (applet.dist(applet.gballOld[i].x, applet.gballOld[i].y, applet.gballOld[i - 1].x, applet.gballOld[i - 1].y) > 2) {
+                        applet.curveVertex(applet.gballOld[i].x, applet.gballOld[i].y);
+                    }
+
+                    //moving avg
+                    //float avgX = (gballOld[i].x + gballOld[i+1].x + gballOld[i+2].x) / 3;
+                    //float avgY = (gballOld[i].y + gballOld[i+1].y + gballOld[i+2].y) /3;
+                    //curveVertex(avgX, avgY);
+                }
+                applet.curveVertex(applet.gballOld[settings.getTraceLength()].x, applet.gballOld[settings.getTraceLength()].y);
+                applet.endShape();
+            }
+            //Draw G-Ball
+            applet.gballNew.x = applet.map(applet.gForceX, -20, 20, -40, 40) + 96;
+            applet.gballNew.y = applet.map(applet.gForceY, -20, 20, -40, 40) + 75;
+            //if the G-Ball is going to jump more than 5 pixels in one frame
+            //don't let it
+            //if (dist(gballNew.x, gballNew.y, gballOld.x, gballOld.y) > 25) {
+            //  gballNew.x = gballOld.x;
+            //  gballNew.y = gballOld.y;
+            //}
+            //shading for G-Ball
+            //color shaded or white depending on settings
+
+            if (settings.getColorGball()) {
+                //shadow
+                //fill(0, 0, 0, 100);
+                //noStroke();
+                //ellipse(gballNew.x, gballNew.y, 20, 20);
+                for (int i = 1; i < 17; i++) {
+                    applet.noFill();
+                    applet.stroke(applet.color(180, 180 - (180 / 16) * i, 180 - (180 / 16) * i));
+                    applet.ellipse(applet.gballNew.x, applet.gballNew.y, i, i);
+                }
+            } else {
+                applet.fill(applet.WHITE);
+                applet.stroke(0);
+                applet.ellipse(applet.gballNew.x, applet.gballNew.y, 16, 16);
+            }
+
+            //Differential draw
+            applet.rectMode(applet.CENTER);
+            applet.stroke(0);
+            applet.fill(255);
+            applet.rect(1000 + applet.fdiff, 40, 10, 30);
+            applet.rect(1000, 80 + applet.cdiff, 30, 10);
+            applet.rect(1000 + applet.rdiff, 120, 10, 30);
+        }
+        if (settings.getShowGTrace()) {
+            //Update GBall previous positions
+            for (int i = settings.getTraceLength() - 1; i > -1; i--) {
+                applet.gballOld[i + 1].x = applet.gballOld[i].x;
+                applet.gballOld[i + 1].y = applet.gballOld[i].y;
+            }
+            applet.gballOld[0].x = applet.gballNew.x;
+            applet.gballOld[0].y = applet.gballNew.y;
+        }
+    }
+
+    @Override
+    public void drawWheel(){
+        applet.pushMatrix();
+        applet.translate(684, 75);
+        applet.rotate(applet.steeringOutput);
+        applet.image(wheelImg, -50, -50, 100, 100);
+        applet.popMatrix();
+    }
 
 }

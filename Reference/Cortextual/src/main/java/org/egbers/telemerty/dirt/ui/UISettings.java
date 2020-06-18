@@ -36,6 +36,9 @@ public class UISettings {
     private boolean compactMode;
     private boolean wheelMode;
 
+    private float clutchSens;
+    private int gearColorDuration;
+
     public UISettings(String[] settingsin, int bgColor, int fgColor, int lblColor, int activeColor) {
         gballFlash = Boolean.valueOf(settingsin[0]);
         wheelRot = Integer.valueOf(settingsin[1]);
@@ -75,6 +78,8 @@ public class UISettings {
         } else {
             wheelMode = true;
         }
+        clutchSens = 0.2f;
+        gearColorDuration = 250;
     }
 
     public boolean getGballFlash() {
@@ -203,5 +208,24 @@ public class UISettings {
 
     public boolean getWheelMode() {
         return wheelMode;
+    }
+
+    public float getClutchSens() {
+        return clutchSens;
+    }
+
+    public int getGearColorDuration() {
+        return gearColorDuration;
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Settings Loaded from file: ").append("\n")
+            .append("G-Ball Flash: " + gballFlash + " Wheel Rotation: " + wheelRot + " Color Gear Change: " + colorGearChange).append("\n")
+            .append("Color Pedals: " + colorPedals + " Color Speedo: " + colorSpeedo + " Color Revs: " + colorRevs).append("\n")
+            .append("Show Max: " + showMax + " Show Average: " + showAvg + " Show Distance: " + showDist).append("\n")
+            .append("Color Suspension: " + colorSusp + " Color G-Ball: " + colorGball).append("\n")
+            .append(" Max Revs: " + maxRevs + " Max Speed: " + maxSpeed + " UI Scale: " + uiScale + "%");
+        return builder.toString();
     }
 }

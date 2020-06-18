@@ -23,84 +23,64 @@ public class DashBoardApplet extends PApplet {
     public final int DARKGREY = color(45, 45, 45);
     public final int ORANGE = color(255, 128, 0);
 
+    public String pathPrefix = "C:\\Users\\matt_\\Development\\java\\DirtRallyTelemetry\\Reference\\Cortextual\\src\\main\\resources\\data\\";
+    String settingsPath = pathPrefix + "settings";
+    String UDPSettingsPath = pathPrefix + "connection.cfg";
+
+    String settingsIn[], udpSettingsin[];
     private UISettings settings;
     public UISettings getSettings() {
         return settings;
     }
 
+
     private ControlP5 cp5;
     private Controller controller;
 
 
-
-    int mx, my = 0;
-    boolean isWindowBeingDragged = false;
-
-    //settings
-    int wheelRot = 400;
-    int gearColorDuration = 250;
-    boolean gballFlash = false;
-    boolean colorGearChange, colorPedals, colorSpeedo, colorRevs,
-            showMax, showAvg, showDist, colorSusp, colorGball, clutchIndicator;
-    int maxSpeed = 260;
-    int maxRevs = 11000;
-    int mode = 1;
-    String settingsIn[], udpSettingsin[];
-    float uiScale;
-
     boolean debugging = false;
     boolean debuggingSettings = false;
-    //boolean fullMode = false;
-    //boolean compactMode = false;
-    //boolean wheelMode = false;
+
+
     String ip = "127.0.0.1";
-    float clutchD = 0;
-    float clutchSens = 0.2f;
-    boolean cKey = false;
-    int winPosX = 0;
-    int winPosY = 0;
-    boolean borderless = false;
-    boolean showGTrace = true;
-    boolean alwaysTop = true;
-    int traceLength = 60;
-
     int portRX = 20777;
-
-    float maxRpm = 0;
-    Point winLoc;
-    Point winLoc2;
-
-
     UDP udpRX;
     boolean udpOpen = false;
-    String pathPrefix = "C:\\Users\\matt_\\Development\\java\\DirtRallyTelemetry\\Reference\\Cortextual\\src\\main\\resources\\data\\";
-    String settingsPath = pathPrefix + "settings";
-    String UDPSettingsPath = pathPrefix + "connection.cfg";
+
+
+    Point winLoc;
+    Point winLoc2;
+    int mx, my = 0;
 
 
 
     // All Data Below Here???
-    PVector gballOld[] = new PVector[301];
-    PVector gballNew;
-    float timer;
-    boolean gearChanged = false;
-    boolean changedUp = true;
-    float previousGear = 0;
-    float currentGear = 0;
+    public float clutchD = 0;
+    public PImage img, imgDrag;
+    public boolean isWindowBeingDragged = false; //State variable
+    public float currentGear = 0; //State variable
+    public float gForceX = 0.0f;
+    public float gForceY = 0.0f;
+    public float fdiff = 0.0f;
+    public float cdiff = 0.0f;
+    public float rdiff = 0.0f;
+    public float steeringOutput = 0.0f;
+
+    public PVector gballOld[] = new PVector[301];
+    public PVector gballNew;
+
+    //For Drawing Gears
+    public String gearValue;
+    public float previousGear = 0;
+    public float timer;
+    public boolean gearChanged = false;
+    public boolean changedUp = true;
+
+
     boolean revsReset = false;
-    String gearValue;
-    PImage img, imgDrag, wheelImg, bLightOn, bLightOff, kPanel;
-
-    float gForceX = 0.0f;
-    float gForceY = 0.0f;
-    float steeringOutput = 0.0f;
-
-    float fdiff = 0.0f;
-    float cdiff = 0.0f;
-    float rdiff = 0.0f;
     float maxSpd = 0.0f;
     float avgSpd = 0.0f;
-
+    float maxRpm = 0;
 
 
     public void settings() {
@@ -108,30 +88,7 @@ public class DashBoardApplet extends PApplet {
         settingsIn = loadStrings(settingsPath);
         settings = new UISettings(settingsIn, DARKGREY, WHITE, 0xffebf8ff, 0xff12acdb);
 
-        gballFlash = Boolean.valueOf(settingsIn[0]);
-        wheelRot = Integer.valueOf(settingsIn[1]);
-        colorGearChange = Boolean.valueOf(settingsIn[2]);
-        colorPedals = Boolean.valueOf(settingsIn[3]);
-        colorSpeedo = Boolean.valueOf(settingsIn[4]);
-        colorRevs = Boolean.valueOf(settingsIn[5]);
-        showMax = Boolean.valueOf(settingsIn[6]);
-        showAvg = Boolean.valueOf(settingsIn[7]);
-        showDist = Boolean.valueOf(settingsIn[8]);
-        colorSusp = Boolean.valueOf(settingsIn[9]);
-        colorGball = Boolean.valueOf(settingsIn[10]);
-        //useJoystick = Boolean.valueOf(settingsin[11]);
-        maxRevs = Integer.valueOf(settingsIn[12]);
-        maxSpeed = Integer.valueOf(settingsIn[13]);
-        uiScale = Float.valueOf(settingsIn[14]);
-        mode = Integer.valueOf(settingsIn[15]);
-        cKey = Boolean.valueOf(settingsIn[16]);
-        clutchIndicator = Boolean.valueOf(settingsIn[17]);
-        winPosX = Integer.valueOf(settingsIn[18]);
-        winPosY = Integer.valueOf(settingsIn[19]);
-        borderless = Boolean.valueOf(settingsIn[20]);
-        showGTrace = Boolean.valueOf(settingsIn[21]);
-        traceLength = Integer.valueOf(settingsIn[22]);
-        alwaysTop = Boolean.valueOf(settingsIn[23]);
+
 
         //load connection settings
         udpSettingsin = loadStrings(UDPSettingsPath);
@@ -143,8 +100,8 @@ public class DashBoardApplet extends PApplet {
         //set window size
         int xSize = 1100;
         int ySize = 180;
-        xSize = PApplet.parseInt(xSize * (uiScale / 100));
-        ySize = PApplet.parseInt(ySize * (uiScale / 100));
+        xSize = PApplet.parseInt(xSize * (settings.getUiScale() / 100));
+        ySize = PApplet.parseInt(ySize * (settings.getUiScale() / 100));
 
         if (settings.getCompactMode()) {
             xSize = xSize / 2;
@@ -168,27 +125,22 @@ public class DashBoardApplet extends PApplet {
         PImage titlebaricon = loadImage(pathPrefix + "Icon.png");
         surface.setIcon(titlebaricon);
         surface.setTitle("DiRT Telemetry Tool");
-        surface.setResizable(borderless);
+        surface.setResizable(settings.getBorderless());
         PSurfaceAWT awtSurface = (PSurfaceAWT) surface;
         PSurfaceAWT.SmoothCanvas smoothCanvas = (PSurfaceAWT.SmoothCanvas) awtSurface.getNative();
-        smoothCanvas.getFrame().setAlwaysOnTop(alwaysTop);
+        smoothCanvas.getFrame().setAlwaysOnTop(settings.getAlwaysTop());
         smoothCanvas.getFrame().removeNotify();
-        smoothCanvas.getFrame().setUndecorated(borderless);
+        smoothCanvas.getFrame().setUndecorated(settings.getBorderless());
         //smoothCanvas.getFrame().setOpacity(1.0);
         //smoothCanvas.getFrame().setBackground(new Color(0, 0, 0, 126));
-        smoothCanvas.getFrame().setLocation(winPosX - (width / 2), winPosY);
+        smoothCanvas.getFrame().setLocation(settings.getWinPosX() - (width / 2), settings.getWinPosY());
         smoothCanvas.getFrame().addNotify();
 
         if (debuggingSettings) {
-            println("Settings Loaded from file: ");
-            println("G-Ball Flash: " + gballFlash + " Wheel Rotation: " + wheelRot + " Color Gear Change: " + colorGearChange);
-            println("Color Pedals: " + colorPedals + " Color Speedo: " + colorSpeedo + " Color Revs: " + colorRevs);
-            println("Show Max: " + showMax + " Show Average: " + showAvg + " Show Distance: " + showDist);
-            println("Color Suspension: " + colorSusp + " Color G-Ball: " + colorGball);
-            println(" Max Revs: " + maxRevs + " Max Speed: " + maxSpeed + " UI Scale: " + uiScale + "%");
+            println(settings.toString());
         }
         //initialise gball values
-        for (int i = 0; i < traceLength + 1; i++) {
+        for (int i = 0; i < settings.getTraceLength() + 1; i++) {
             gballOld[i] = new PVector(96, 75);
         }
 
@@ -198,23 +150,15 @@ public class DashBoardApplet extends PApplet {
         smooth();
         background(0);
 
-        if (cKey) {
+        if (settings.getcKey()) {
             img = loadImage(pathPrefix + "bgy.png");
         } else {
             img = loadImage(pathPrefix + "bg.png");
         }
-        //imgDrag=loadImage(pathPrefix + "bgw.png");
-        kPanel = loadImage(pathPrefix + "kPanel.png");
-        bLightOn = loadImage(pathPrefix + "bLightOn.png");
-        bLightOff = loadImage(pathPrefix + "bLightOff.png");
-        if (!settings.getCompactMode()) {
-            wheelImg = loadImage(pathPrefix + "wheel.png");
-        } else {
-            wheelImg = loadImage(pathPrefix + "wheelCompact.png");
-        }
+
         //draw controllers on screen
-        controller = ControllerFactory.createController(mode);
-        cp5 = controller.drawControls(this);
+        controller = ControllerFactory.createController(this, settings.getMode());
+        cp5 = controller.drawControls();
 
 
 
@@ -236,8 +180,6 @@ public class DashBoardApplet extends PApplet {
                                   float ususpFR, float uwspAL, float uwspAR, float uwspFL, float uwspFR, float uthrottle, float ubrakes, float uclutch, float usteering,
                                   float ugear, float ugForce_X, float ugForce_Y, float ucLap, float urpm) {
 
-        PFont p1 = createFont("arial", 24, true);
-
         float distKm = udistance / 1000;
         float timeHrs = ulapTime / 3600;
 
@@ -256,7 +198,7 @@ public class DashBoardApplet extends PApplet {
             maxRpm = urpm;
         }
         // If revs are over 95% Change rev bar to red
-        if (((urpm) > (maxRpm * .95f)) && colorRevs) {
+        if (((urpm) > (maxRpm * .95f)) && settings.getColorRevs()) {
             cp5.getController("rpm").setColorForeground(RED);
         } else {
             cp5.getController("rpm").setColorForeground(WHITE);
@@ -282,29 +224,29 @@ public class DashBoardApplet extends PApplet {
         cp5.getController("throttle").setValue(uthrottle);
         cp5.getController("gearLabel").setStringValue(gearValue);
         cp5.getController("speed").setValue(uspeed);
-        if (colorSpeedo)
-            cp5.getController("speed").setColorForeground(color(255, 255 - map(uspeed, 0, maxSpeed, 0, 255), 255 - map(uspeed, 0, maxSpeed, 0, 255)));
+        if (settings.getColorSpeedo())
+            cp5.getController("speed").setColorForeground(color(255, 255 - map(uspeed, 0, settings.getMaxSpeed(), 0, 255), 255 - map(uspeed, 0, settings.getMaxSpeed(), 0, 255)));
         cp5.getController("suspFL").setValue(ususpFL);
         float suspFlashPct = .9f;
-        if ((ususpFL > (cp5.getController("suspFL").getMax() * suspFlashPct)) && colorSusp) {
+        if ((ususpFL > (cp5.getController("suspFL").getMax() * suspFlashPct)) && settings.getColorSusp()) {
             cp5.getController("suspFL").setColorForeground(RED);
         } else {
             cp5.getController("suspFL").setColorForeground(WHITE);
         }
         cp5.getController("suspFR").setValue(ususpFR);
-        if ((ususpFR > (cp5.getController("suspFR").getMax() * suspFlashPct)) && colorSusp) {
+        if ((ususpFR > (cp5.getController("suspFR").getMax() * suspFlashPct)) && settings.getColorSusp()) {
             cp5.getController("suspFR").setColorForeground(RED);
         } else {
             cp5.getController("suspFR").setColorForeground(WHITE);
         }
         cp5.getController("suspAL").setValue(ususpAL);
-        if ((ususpAL > (cp5.getController("suspAL").getMax() * suspFlashPct)) && colorSusp) {
+        if ((ususpAL > (cp5.getController("suspAL").getMax() * suspFlashPct)) && settings.getColorSusp()) {
             cp5.getController("suspAL").setColorForeground(RED);
         } else {
             cp5.getController("suspAL").setColorForeground(WHITE);
         }
         cp5.getController("suspAR").setValue(ususpAR);
-        if ((ususpFL > (cp5.getController("suspAR").getMax() * suspFlashPct)) && colorSusp) {
+        if ((ususpFL > (cp5.getController("suspAR").getMax() * suspFlashPct)) && settings.getColorSusp()) {
             cp5.getController("suspAR").setColorForeground(RED);
         } else {
             cp5.getController("suspAR").setColorForeground(WHITE);
@@ -316,7 +258,7 @@ public class DashBoardApplet extends PApplet {
 
 
         //Steering Processing
-        steeringOutput = radians(usteering * (wheelRot / 2));
+        steeringOutput = radians(usteering * (settings.getWheelRot() / 2));
 
 
         //Differential math
@@ -396,6 +338,10 @@ public class DashBoardApplet extends PApplet {
         }
     }
 
+    public void setFieldColor(String field, int color) {
+        cp5.getController(field).setColorValue(color);
+    }
+
 //       _
 //      | |
 //    __| |_ __ __ ___      __
@@ -403,13 +349,12 @@ public class DashBoardApplet extends PApplet {
 //  | (_| | | | (_| |\ V  V /
 //   \__,_|_|  \__,_| \_/\_/
 
-
     public void draw() {
         //Prevent crash if app is run for 828 days lol
         if (frameCount == -1) frameCount = 1;
 
         //set UI Scale
-        scale(uiScale / 100);
+        scale(settings.getUiScale() / 100);
         if (udpOpen) {
             //PVector gballMove = new PVector(0,0);
             //background(0);
@@ -420,225 +365,17 @@ public class DashBoardApplet extends PApplet {
                 cp5.setVisible(false);
             } else {
                 cp5.setVisible(true);
-                colorGear();
-                drawWheel();
+                controller.colorGear();
+                controller.drawWheel();
             }
 
         }
 
         strokeWeight(1);
+        controller.draw();
 
-
-
-        if (settings.getFullMode()) {
-
-            //Draw GBall
-            if (!isWindowBeingDragged) {
-                ellipseMode(CENTER);
-                stroke(0);
-
-                //if gballFlash is turned on
-                //Flash G-Ball enclosure red if gforce > 15
-                if (((abs(gForceX) > 15) || (abs(gForceX) > 15)) && (gballFlash)) {
-                    fill(RED);
-                    // red outer ellipse for G-Ball
-                    //with grey central ellipse
-                    ellipse(96, 75, 120, 120);
-                    fill(DARKGREY);
-                    ellipse(96, 75, 70, 70);
-                } else if (((abs(gForceX) > 10) || (abs(gForceX) > 10)) && (gballFlash)) {
-                    fill(ORANGE);
-                    // orange outer ellipse for G-Ball
-                    //with grey central ellipse
-                    ellipse(96, 75, 120, 120);
-                    fill(DARKGREY);
-                    ellipse(96, 75, 70, 70);
-                } else {
-                    fill(DARKGREY);
-                    //background ellipse for G-Ball
-                    ellipse(96, 75, 120, 120);
-                }
-                //Black lines on G-Ball
-                fill(DARKGREY);
-                ellipse(96, 75, 70, 70);
-                //stroke(255);
-                fill(255, 0);
-                ellipse(96, 75, 70, 70);
-                line(96, 15, 96, 135);
-                line(36, 75, 156, 75);
-                fill(255, 0);
-
-                //Draw Trace of previous 10 GBall positions
-                fill(WHITE);
-                noStroke();
-                stroke(255, 255, 255, 200);
-                noFill();
-                if (showGTrace) {
-                    //curveTightness(.5);
-                    strokeWeight(2);
-                    beginShape();
-                    curveVertex(gballOld[0].x, gballOld[0].y);
-                    for (int i = 1; i < traceLength - 1; i++) {
-
-                        //ellipse(gballOld[i].x, gballOld[i].y, 5, 5);
-                        //line(gballOld[i-1].x, gballOld[i-1].y,gballOld[i].x, gballOld[i].y);
-                        if (dist(gballOld[i].x, gballOld[i].y, gballOld[i - 1].x, gballOld[i - 1].y) > 2) {
-                            curveVertex(gballOld[i].x, gballOld[i].y);
-                        }
-
-                        //moving avg
-                        //float avgX = (gballOld[i].x + gballOld[i+1].x + gballOld[i+2].x) / 3;
-                        //float avgY = (gballOld[i].y + gballOld[i+1].y + gballOld[i+2].y) /3;
-                        //curveVertex(avgX, avgY);
-                    }
-                    curveVertex(gballOld[traceLength].x, gballOld[traceLength].y);
-                    endShape();
-                }
-                //Draw G-Ball
-                gballNew.x = map(gForceX, -20, 20, -40, 40) + 96;
-                gballNew.y = map(gForceY, -20, 20, -40, 40) + 75;
-                //if the G-Ball is going to jump more than 5 pixels in one frame
-                //don't let it
-                //if (dist(gballNew.x, gballNew.y, gballOld.x, gballOld.y) > 25) {
-                //  gballNew.x = gballOld.x;
-                //  gballNew.y = gballOld.y;
-                //}
-                //shading for G-Ball
-                //color shaded or white depending on settings
-
-                if (colorGball) {
-                    //shadow
-                    //fill(0, 0, 0, 100);
-                    //noStroke();
-                    //ellipse(gballNew.x, gballNew.y, 20, 20);
-                    for (int i = 1; i < 17; i++) {
-                        noFill();
-                        stroke(color(180, 180 - (180 / 16) * i, 180 - (180 / 16) * i));
-                        ellipse(gballNew.x, gballNew.y, i, i);
-                    }
-                } else {
-                    fill(WHITE);
-                    stroke(0);
-                    ellipse(gballNew.x, gballNew.y, 16, 16);
-                }
-
-                //Differential draw
-                rectMode(CENTER);
-                stroke(0);
-                fill(255);
-                rect(1000 + fdiff, 40, 10, 30);
-                rect(1000, 80 + cdiff, 30, 10);
-                rect(1000 + rdiff, 120, 10, 30);
-            }
-            if (showGTrace) {
-                //Update GBall previous positions
-                for (int i = traceLength - 1; i > -1; i--) {
-                    gballOld[i + 1].x = gballOld[i].x;
-                    gballOld[i + 1].y = gballOld[i].y;
-                }
-                gballOld[0].x = gballNew.x;
-                gballOld[0].y = gballNew.y;
-            }
-
-
-        } else if (settings.getCompactMode() && !isWindowBeingDragged) {
-            //Black panels for keying
-            fill(BLACK);
-            stroke(0);
-            //ellipse(275,75,85,85);
-            image(kPanel, 0, 136);
-            //rect(0,136,550,38);
-            //Clutch Lights
-            if (!settings.getFullMode() & clutchD > clutchSens & clutchIndicator) {
-                image(bLightOn, 175, 143, 25, 25);
-                image(bLightOn, 350, 143, 25, 25);
-            } else if (clutchIndicator) {
-                image(bLightOff, 175, 143, 25, 25);
-                image(bLightOff, 350, 143, 25, 25);
-            }
-        } else {
-            if (!settings.getFullMode() & clutchD > clutchSens & clutchIndicator) {
-                fill(0, 0);
-                stroke(color(0, 0, 255));
-                rect(24, 13, 26, 121);
-                rect(23, 12, 28, 123);
-                rect(22, 11, 30, 125);
-            }
-        }
-        //if (debugging) println("Draw complete.");
     }
 
-
-    public void colorGear() {
-        if (currentGear == 10 || currentGear < 0) {
-            //make reverse lower than the other gears for the shifting-up logic
-            currentGear = -10;
-            gearValue = "R";
-        } else if (currentGear == 0) {
-            gearValue = "N";
-        } else {
-            gearValue = String.valueOf(currentGear);
-            gearValue = gearValue.substring(0, 1);
-        }
-
-
-        //check direction of gear change and time stamp it
-        if (previousGear > currentGear) {
-            timer = millis();
-            changedUp = false;
-        } else if (previousGear < currentGear) {
-            timer = millis();
-            changedUp = true;
-        }
-
-        //Checks that gear change was recent
-        if ((timer > 0) && (millis() - timer < gearColorDuration)) {
-            gearChanged = true;
-        } else {
-            gearChanged = false;
-        }
-
-        // if you're in neutral or reverse the gear indicator is red
-        // if you're shifting up from any gear other than neutral it's green, down it's red
-        // neutral has to be ignored because H-Shifters go to it between gears and
-        // everything becomes an upshift from neutral
-
-        if (colorGearChange) {
-            if ((gearValue == "R") || (gearValue == "N")) {
-                cp5.getController("gearLabel").setColorValue(RED);
-            } else if ((changedUp) && (gearChanged)) {
-                cp5.getController("gearLabel").setColorValue(GREEN);
-            } else if ((!changedUp) && (gearChanged)) {
-                cp5.getController("gearLabel").setColorValue(RED);
-            } else {
-                cp5.getController("gearLabel").setColorValue(WHITE);
-            }
-        }
-
-        if (currentGear != 0) previousGear = currentGear;
-        if (debugging) println("ColorGear complete.");
-    }
-
-    public void drawWheel() {
-
-        pushMatrix();
-        if (settings.getFullMode()) {
-            translate(684, 75);
-            rotate(steeringOutput);
-            image(wheelImg, -50, -50, 100, 100);
-        } else if (settings.getCompactMode()) {
-            translate(275, 75);
-            rotate(steeringOutput);
-            image(wheelImg, -60, -60, 120, 120);
-        } else {
-            translate(125, 75);
-            rotate(steeringOutput);
-            image(wheelImg, -60, -60, 120, 120);
-        }
-
-        popMatrix();
-        //if (debugging) println("DrawWheel complete.");
-    }
 
     public void createUDP() {
         // Create new object for receiving
@@ -650,11 +387,11 @@ public class DashBoardApplet extends PApplet {
         if (debugging) println("UDP Opened");
     }
 
-    public void closeUDP() {
-        udpRX.dispose();
-        udpOpen = false;
-        if (debugging) println("UDP Closed");
-    }
+//    public void closeUDP() {
+//        udpRX.dispose();
+//        udpOpen = false;
+//        if (debugging) println("UDP Closed");
+//    }
 
 /*void resetAll() {
  closeUDP();
@@ -684,7 +421,7 @@ public class DashBoardApplet extends PApplet {
     }
 
     public void mousePressed() {
-        if ((mouseButton == LEFT) && borderless) {
+        if ((mouseButton == LEFT) && settings.getBorderless()) {
             isWindowBeingDragged = false;
             PSurfaceAWT awtSurface = (PSurfaceAWT) surface;
             PSurfaceAWT.SmoothCanvas smoothCanvas = (PSurfaceAWT.SmoothCanvas) awtSurface.getNative();
@@ -695,7 +432,7 @@ public class DashBoardApplet extends PApplet {
     }
 
     public void mouseReleased() {
-        if ((mouseButton == LEFT) && borderless) {
+        if ((mouseButton == LEFT) && settings.getBorderless()) {
             isWindowBeingDragged = false;
             int newPosX = (mouseX - mx);
             int newPosY = (mouseY - my);

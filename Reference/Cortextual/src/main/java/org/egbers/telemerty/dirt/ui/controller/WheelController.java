@@ -5,12 +5,19 @@ import org.egbers.telemerty.dirt.ui.DashBoardApplet;
 import org.egbers.telemerty.dirt.ui.UISettings;
 import org.egbers.telemerty.dirt.ui.controller.Controller;
 import processing.core.PFont;
+import processing.core.PImage;
 
 public class WheelController extends Controller {
     private ControlP5 cp5;
+    private PImage wheelImg;
+
+    public WheelController(DashBoardApplet applet) {
+        super(applet);
+        wheelImg = applet.loadImage(applet.pathPrefix + "wheel.png");
+    }
 
     @Override
-    public ControlP5 drawControls(DashBoardApplet applet) {
+    public ControlP5 drawControls() {
         // Create some dials and gauges on screen
         cp5 = new ControlP5(applet);
         UISettings settings = applet.getSettings();
@@ -231,5 +238,26 @@ public class WheelController extends Controller {
         //if (debugging) println("DrawControllersWheel complete.");
 
         return cp5;
+    }
+
+    @Override
+    public void draw() {
+        UISettings settings = applet.getSettings();
+        if (!settings.getFullMode() & applet.clutchD > settings.getClutchSens() & settings.getClutchIndicator()) {
+            applet.fill(0, 0);
+            applet.stroke(applet.color(0, 0, 255));
+            applet.rect(24, 13, 26, 121);
+            applet.rect(23, 12, 28, 123);
+            applet.rect(22, 11, 30, 125);
+        }
+    }
+
+    @Override
+    public void drawWheel(){
+        applet.pushMatrix();
+        applet.translate(125, 75);
+        applet.rotate(applet.steeringOutput);
+        applet.image(wheelImg, -60, -60, 120, 120);
+        applet.popMatrix();
     }
 }

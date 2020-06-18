@@ -4,12 +4,22 @@ import controlP5.ControlP5;
 import org.egbers.telemerty.dirt.ui.DashBoardApplet;
 import org.egbers.telemerty.dirt.ui.UISettings;
 import processing.core.PFont;
+import processing.core.PImage;
 
 public class CompactController extends Controller {
     private ControlP5 cp5;
+    private PImage kPanel, bLightOn, bLightOff, wheelImg;
+
+    public CompactController(DashBoardApplet applet) {
+        super(applet);
+        kPanel = applet.loadImage(applet.pathPrefix + "kPanel.png");
+        bLightOn = applet.loadImage(applet.pathPrefix + "bLightOn.png");
+        bLightOff = applet.loadImage(applet.pathPrefix + "bLightOff.png");
+        wheelImg = applet.loadImage(applet.pathPrefix + "wheelCompact.png");
+    }
 
     @Override
-    public ControlP5 drawControls(DashBoardApplet applet) {
+    public ControlP5 drawControls() {
         // Create some dials and gauges on screen
 
         cp5 = new ControlP5(applet);
@@ -230,5 +240,33 @@ public class CompactController extends Controller {
 
         //if (debugging) println("DrawControllersCompact complete.");
         return cp5;
+    }
+
+    @Override
+    public void draw() {
+        UISettings settings = applet.getSettings();
+        //Black panels for keying
+        applet.fill(applet.BLACK);
+        applet.stroke(0);
+        //ellipse(275,75,85,85);
+        applet.image(kPanel, 0, 136);
+        //rect(0,136,550,38);
+        //Clutch Lights
+        if (!settings.getFullMode() & applet.clutchD > settings.getClutchSens() & settings.getClutchIndicator()) {
+            applet.image(bLightOn, 175, 143, 25, 25);
+            applet.image(bLightOn, 350, 143, 25, 25);
+        } else if (settings.getClutchIndicator()) {
+            applet.image(bLightOff, 175, 143, 25, 25);
+            applet.image(bLightOff, 350, 143, 25, 25);
+        }
+    }
+
+    @Override
+    public void drawWheel() {
+        applet.pushMatrix();
+        applet.translate(275, 75);
+        applet.rotate(applet.steeringOutput);
+        applet.image(wheelImg, -60, -60, 120, 120);
+        applet.popMatrix();
     }
 }

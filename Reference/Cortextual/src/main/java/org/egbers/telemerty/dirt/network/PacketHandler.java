@@ -99,11 +99,6 @@ public class PacketHandler {
 
         applet.updateControllers(packet);
 
-//        applet.updateControllers(tTime, lapTime, distance, posx, posy, speed, suspAL,
-//                suspAR, suspFL, suspFR, wspAL, wspAR, wspFL, wspFR,
-//                throttle, brakes, clutch, steering, gear, gForce_X,
-//                gForce_Y, cLap, rpm);
-        //if (debugging) println("Receive complete.");
     }
 
     private float parseFieldValue(byte[] data, int pos) {
