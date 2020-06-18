@@ -10,7 +10,7 @@ import processing.event.MouseEvent;
 public class DashboardApplet extends PApplet {
 
     String ip="127.0.0.1";
-    int portRX=10001;
+    int portRX=20777;
 
 
     float gForceX = 0.0f;
@@ -47,7 +47,7 @@ public class DashboardApplet extends PApplet {
         smooth();
         background(0);
 
-        img=loadImage("/Users/megbers/Documents/personal/workspaces/DirtRallyTelemetry/Reference/Zeb/src/main/resources/data/background1080_200revb.png");
+        img=loadImage("C:\\Users\\matt_\\Development\\java\\DirtRallyTelemetry\\Reference\\Zeb\\src\\main\\resources\\data\\background1080_200revb.png");
 
         // Create some dials and gauges on screen
         cp5 = new ControlP5(this);

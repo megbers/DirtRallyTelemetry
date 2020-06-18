@@ -30,7 +30,7 @@ public class DiRT_Telemetry_noarduino_pde extends PApplet {
     UDP udpRX;
     PImage img;
     String ip="127.0.0.1";
-    int portRX=10001;
+    int portRX=20777;
     //float gForceX = 0.0;
     float gForceX = 0.0f;
     float gForceY = 0.0f;
@@ -53,7 +53,7 @@ public class DiRT_Telemetry_noarduino_pde extends PApplet {
         smooth();
         background(0);
 
-        img=loadImage("/Users/megbers/Documents/personal/workspaces/DirtRallyTelemetry/Reference/Zeb/src/main/resources/data/background1080_200revb.png");
+        img=loadImage("C:\\Users\\matt_\\Development\\java\\DirtRallyTelemetry\\Reference\\Zeb\\src\\main\\resources\\data\\background1080_200revb.png");
         // Arduino connection
 //  port = new Serial(this, "COM3", 9600);  // Your offset may vary
 
